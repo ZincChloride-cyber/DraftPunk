@@ -1,0 +1,21 @@
+# ── Audio Processing ──
+librosa>=0.10.2
+soundfile>=0.13.0
+
+# ── ML Frameworks ──
+scikit-learn>=1.7.0
+tensorflow>=2.19.0
+joblib>=1.4.0
+
+# ── Backend Framework ──
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+python-multipart>=0.0.20
+
+# ── Data Handling ──
+numpy>=2.0.0
+pandas>=2.2.0
+
+# ── Utilities ──
+requests>=2.32.0
+tqdm>=4.67.0
