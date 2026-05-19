@@ -49,6 +49,17 @@ predictor = GenrePredictor(model_type="rf")
 # ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+@app.get("/")
+async def root():
+    """Helpful landing page when visiting the API base URL in a browser."""
+    return {
+        "name": "Draft Punk — Genre Classification API",
+        "docs": "/docs",
+        "health": "/api/health",
+        "predict": "POST /api/predict",
+    }
+
+
 @app.get("/api/health")
 async def health_check():
     """Check if the API is running and the model is available."""

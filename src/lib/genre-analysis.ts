@@ -23,27 +23,17 @@ export interface GenreResult {
 
 // ── Configuration ────────────────────────────────────────────────────────────
 
-const API_BASE_URL = "http://localhost:8000";
+// In dev, Vite proxies /api → http://127.0.0.1:8000 (see vite.config.ts)
+const API_BASE_URL = import.meta.env.DEV ? "" : "http://localhost:8000";
 
 // ── Main analysis function ───────────────────────────────────────────────────
 
 /**
  * Analyze an audio file by sending it to the ML backend.
- * If the backend is unavailable, falls back to client-side heuristics.
+ * Requires the FastAPI server to be running with trained models.
  */
-export async function analyzeAudio(
-  file: File,
-  audioBuffer?: AudioBuffer | null,
-): Promise<GenreResult> {
-  try {
-    return await analyzeWithBackend(file);
-  } catch (err) {
-    console.warn("Backend unavailable, falling back to client-side analysis:", err);
-    if (audioBuffer) {
-      return analyzeClientSide(audioBuffer);
-    }
-    throw new Error("Backend is unreachable and no AudioBuffer provided for fallback.");
-  }
+export async function analyzeAudio(file: File): Promise<GenreResult> {
+  return analyzeWithBackend(file);
 }
 
 // ── Backend API call ─────────────────────────────────────────────────────────
@@ -52,10 +42,17 @@ async function analyzeWithBackend(file: File): Promise<GenreResult> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/api/predict`, {
-    method: "POST",
-    body: formData,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/predict`, {
+      method: "POST",
+      body: formData,
+    });
+  } catch {
+    throw new Error(
+      "ML backend is not reachable. Start it with: cd backend && python -m uvicorn main:app --reload --port 8000",
+    );
+  }
 
   if (!response.ok) {
     const detail = await response.text();
