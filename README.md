@@ -1,4 +1,4 @@
-# Draft Punk 
+# Draft Punk
 
 Draft Punk is a full-stack web application designed for music genre classification. It uses machine learning to analyze audio files and predict their musical genre with high accuracy. 
 
@@ -104,7 +104,7 @@ npm run dev
 ```
 The frontend will be available at `http://localhost:5173`.
 
-## 🧪 API Endpoints
+## API Endpoints
 
 - `GET /api/health` - Check if the API is running and the models are loaded.
 - `POST /api/predict` - Upload an audio file (multipart/form-data) to get a genre prediction, confidence scores, and audio feature data.
