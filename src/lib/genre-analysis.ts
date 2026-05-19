@@ -19,6 +19,20 @@ export interface MelSpectrogramData {
   db_max: number;
 }
 
+export interface ModelInfo {
+  id: string;
+  name: string;
+  framework: string;
+  description?: string;
+}
+
+export interface GenreModelsInfo {
+  prediction: ModelInfo;
+  trained: ModelInfo[];
+  featureExtraction?: string;
+  dataset?: string;
+}
+
 export interface GenreResult {
   genre: string;
   confidence: number;
@@ -33,6 +47,7 @@ export interface GenreResult {
   };
   melSpectrogram?: MelSpectrogramData;
   waveform?: number[];
+  models?: GenreModelsInfo;
 }
 
 // ── Configuration ────────────────────────────────────────────────────────────
@@ -102,6 +117,14 @@ async function analyzeWithBackend(file: File): Promise<GenreResult> {
         }
       : undefined,
     waveform: data.waveform,
+    models: data.models
+      ? {
+          prediction: data.models.prediction,
+          trained: data.models.trained ?? [],
+          featureExtraction: data.models.feature_extraction,
+          dataset: data.models.dataset,
+        }
+      : undefined,
   };
 }
 

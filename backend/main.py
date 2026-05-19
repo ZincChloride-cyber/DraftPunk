@@ -21,7 +21,14 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from config import API_HOST, API_PORT, CORS_ORIGINS, RF_MODEL_PATH
+from config import (
+    API_HOST,
+    API_PORT,
+    CORS_ORIGINS,
+    RF_MODEL_PATH,
+    get_prediction_model_info,
+    get_trained_models,
+)
 from predict import GenrePredictor
 
 # ── App setup ─────────────────────────────────────────────────────────────────
@@ -68,6 +75,10 @@ async def health_check():
         "status": "ok",
         "model_loaded": predictor._loaded,
         "model_available": model_available,
+        "models": {
+            "prediction": get_prediction_model_info(),
+            "trained": get_trained_models(),
+        },
     }
 
 

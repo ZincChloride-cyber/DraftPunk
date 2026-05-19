@@ -48,6 +48,11 @@ function buildColorStops(): (t: number) => string {
 
 export function MelSpectrogram({ data, progress, onSeek }: MelSpectrogramProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const progressRef = useRef(progress);
+
+  // Keep the latest progress accessible to the resize handler without having
+  // to re-bind the listener on every animation frame.
+  progressRef.current = progress;
 
   useEffect(() => {
     draw();
@@ -57,7 +62,7 @@ export function MelSpectrogram({ data, progress, onSeek }: MelSpectrogramProps) 
     const onResize = () => draw();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [data, progress]);
+  }, [data]);
 
   const draw = () => {
     const canvas = canvasRef.current;
@@ -94,8 +99,9 @@ export function MelSpectrogram({ data, progress, onSeek }: MelSpectrogramProps) 
       }
     }
 
-    const playedX = pad.left + progress * plotW;
-    if (progress > 0 && progress < 1) {
+    const currentProgress = progressRef.current;
+    const playedX = pad.left + currentProgress * plotW;
+    if (currentProgress > 0 && currentProgress < 1) {
       ctx.strokeStyle = "oklch(0.99 0.002 250 / 0.85)";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
