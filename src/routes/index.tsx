@@ -170,7 +170,7 @@ function Index() {
             <AudioWaveform className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-base font-semibold tracking-tight">Daft Punk</h1>
+            <h1 className="text-base font-semibold tracking-tight">Draft Punk</h1>
             <div className="flex items-center gap-2">
               <p className="text-xs text-muted-foreground">AI Music Genre Analyzer</p>
               {backendOnline !== null && (
@@ -256,7 +256,11 @@ function Index() {
 
               <Waveform audioBuffer={audioBuffer} progress={progress} onSeek={seek} />
 
+              <label htmlFor="playback-seek" className="sr-only">
+                Playback position
+              </label>
               <input
+                id="playback-seek"
                 type="range"
                 min={0}
                 max={1000}

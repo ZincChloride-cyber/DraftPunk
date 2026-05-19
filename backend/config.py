@@ -70,6 +70,52 @@ CORS_ORIGINS = [
     "http://localhost:3000",
 ]
 
+# ── ML model metadata (for API / UI) ─────────────────────────────────────────
+MODEL_LABELS: dict[str, dict[str, str]] = {
+    "rf": {
+        "name": "Random Forest",
+        "framework": "scikit-learn",
+        "description": "Ensemble of decision trees on MFCC & spectral features",
+    },
+    "svm": {
+        "name": "Support Vector Machine",
+        "framework": "scikit-learn",
+        "description": "RBF-kernel SVM on scaled acoustic features",
+    },
+    "cnn": {
+        "name": "Convolutional Neural Network",
+        "framework": "TensorFlow / Keras",
+        "description": "Deep CNN on segment feature vectors",
+    },
+}
+
+MODEL_PATHS: dict[str, Path] = {
+    "rf": RF_MODEL_PATH,
+    "svm": SVM_MODEL_PATH,
+    "cnn": CNN_MODEL_PATH,
+}
+
+# Model used by the live API for /api/predict
+ACTIVE_PREDICTION_MODEL = "rf"
+
+
+def get_trained_models() -> list[dict[str, str]]:
+    """Return metadata for each trained model file present on disk."""
+    trained: list[dict[str, str]] = []
+    for model_id, path in MODEL_PATHS.items():
+        if path.exists():
+            trained.append({"id": model_id, **MODEL_LABELS[model_id]})
+    return trained
+
+
+def get_prediction_model_info() -> dict[str, str]:
+    """Metadata for the model that serves live predictions."""
+    return {
+        "id": ACTIVE_PREDICTION_MODEL,
+        **MODEL_LABELS[ACTIVE_PREDICTION_MODEL],
+    }
+
+
 # ── GTZAN dataset URL (Kaggle mirror) ────────────────────────────────────────
 GTZAN_DOWNLOAD_URL = os.environ.get(
     "GTZAN_URL",

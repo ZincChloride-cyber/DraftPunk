@@ -72,10 +72,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Daft Punk — AI Music Genre Analyzer" },
+      { title: "Draft Punk — AI Music Genre Analyzer" },
       { name: "description", content: "Upload an audio file and instantly detect its genre with AI-powered analysis, waveform visualization, and confidence scoring." },
-      { name: "author", content: "Daft Punk" },
-      { property: "og:title", content: "Daft Punk — AI Music Genre Analyzer" },
+      { name: "author", content: "Draft Punk" },
+      { property: "og:title", content: "Draft Punk — AI Music Genre Analyzer" },
       { property: "og:description", content: "AI-powered music genre detection with waveform visualization." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -207,7 +207,16 @@ def extract_waveform_for_display(
     *,
     target_samples: int = 600,
 ) -> list[float]:
-    """Downsample amplitude for a line waveform (same signal as mel spectrogram)."""
+    """
+    Downsample amplitude for a line waveform.
+
+    For each block we take the signed peak (largest-magnitude sample) so the
+    resulting line preserves dynamics. Averaging min+max collapses to ~0 for
+    typical music (which is roughly symmetric around 0) and yields a flat line.
+    """
+    if len(signal) == 0:
+        return [0.0] * target_samples
+
     block = max(1, len(signal) // target_samples)
     samples: list[float] = []
     for i in range(target_samples):
@@ -216,7 +225,9 @@ def extract_waveform_for_display(
         if len(chunk) == 0:
             samples.append(0.0)
             continue
-        samples.append(float((np.min(chunk) + np.max(chunk)) / 2))
+        idx = int(np.argmax(np.abs(chunk)))
+        samples.append(float(chunk[idx]))
+
     peak = max((abs(v) for v in samples), default=0.0)
     if peak > 0:
         samples = [v / peak for v in samples]

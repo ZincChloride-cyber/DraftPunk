@@ -17,6 +17,12 @@ export function WaveformLine({
 }: WaveformLineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const samplesRef = useRef<number[]>([]);
+  const progressRef = useRef(progress);
+  const durationRef = useRef<number | undefined>(durationOverride);
+
+  // Keep refs in sync so the resize handler / draw() always see latest values
+  progressRef.current = progress;
+  durationRef.current = durationOverride;
 
   useEffect(() => {
     if (samplesProp?.length) {
@@ -24,23 +30,32 @@ export function WaveformLine({
       draw();
       return;
     }
-    if (!audioBuffer) return;
+    if (!audioBuffer) {
+      samplesRef.current = [];
+      draw();
+      return;
+    }
     const data = audioBuffer.getChannelData(0);
     const targetSamples = 600;
     const blockSize = Math.max(1, Math.floor(data.length / targetSamples));
     const samples: number[] = [];
     for (let i = 0; i < targetSamples; i++) {
       const start = i * blockSize;
-      let min = 0;
-      let max = 0;
+      // Signed peak per block — preserves dynamics. Averaging min+max would
+      // collapse to ~0 for typical (symmetric) music and flatten the line.
+      let peakAbs = 0;
+      let peakSigned = 0;
       for (let j = 0; j < blockSize && start + j < data.length; j++) {
         const v = data[start + j];
-        if (v < min) min = v;
-        if (v > max) max = v;
+        const a = v < 0 ? -v : v;
+        if (a > peakAbs) {
+          peakAbs = a;
+          peakSigned = v;
+        }
       }
-      samples.push((min + max) / 2);
+      samples.push(peakSigned);
     }
-    const peak = Math.max(...samples.map(Math.abs), 0.01);
+    const peak = Math.max(...samples.map((s) => Math.abs(s)), 0.01);
     samplesRef.current = samples.map((s) => s / peak);
     draw();
   }, [audioBuffer, samplesProp]);
@@ -48,6 +63,12 @@ export function WaveformLine({
   useEffect(() => {
     draw();
   }, [progress]);
+
+  useEffect(() => {
+    const onResize = () => draw();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const draw = () => {
     const canvas = canvasRef.current;
@@ -75,7 +96,8 @@ export function WaveformLine({
     const plotW = w - pad.left - pad.right;
     const plotH = h - pad.top - pad.bottom;
     const midY = pad.top + plotH / 2;
-    const playedX = pad.left + progress * plotW;
+    const currentProgress = progressRef.current;
+    const playedX = pad.left + currentProgress * plotW;
 
     ctx.strokeStyle = grid;
     ctx.lineWidth = 1;
@@ -101,9 +123,9 @@ export function WaveformLine({
     };
 
     drawPath(muted, 1);
-    if (progress > 0) drawPath(active, progress);
+    if (currentProgress > 0) drawPath(active, currentProgress);
 
-    if (progress > 0 && progress < 1) {
+    if (currentProgress > 0 && currentProgress < 1) {
       ctx.strokeStyle = active;
       ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
@@ -122,7 +144,7 @@ export function WaveformLine({
     ctx.fillText("-1.0", pad.left - 6, pad.top + plotH);
 
     const duration =
-      durationOverride ?? (audioBuffer ? audioBuffer.duration : 0);
+      durationRef.current ?? (audioBuffer ? audioBuffer.duration : 0);
     ctx.textAlign = "center";
     ctx.fillText("0", pad.left, h - 8);
     ctx.fillText(

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { WaveformLine } from "@/components/WaveformLine";
 import { MelSpectrogram } from "@/components/MelSpectrogram";
-import type { GenreResult } from "@/lib/genre-analysis";
+import type { GenreModelsInfo, GenreResult } from "@/lib/genre-analysis";
 
 interface AudioVisualizationProps {
   audioBuffer: AudioBuffer | null;
@@ -38,6 +38,9 @@ export function AudioVisualization({
             {(result.confidence * 100).toFixed(1)}% confidence
           </span>
         </p>
+        {result.models && (
+          <ModelInfoPanel models={result.models} />
+        )}
       </header>
 
       <VizPlot
@@ -65,6 +68,74 @@ export function AudioVisualization({
         <MelSpectrogram data={mel} progress={progress} onSeek={onSeek} />
       </VizPlot>
     </div>
+  );
+}
+
+function ModelInfoPanel({ models }: { models: GenreModelsInfo }) {
+  const otherTrained = models.trained.filter((m) => m.id !== models.prediction.id);
+
+  return (
+    <div className="mt-4 rounded-2xl border border-white/30 bg-white/40 px-4 py-3">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        ML models used for genre prediction
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <ModelBadge
+          label={models.prediction.name}
+          sublabel={models.prediction.framework}
+          active
+        />
+        {otherTrained.map((m) => (
+          <ModelBadge
+            key={m.id}
+            label={m.name}
+            sublabel={`${m.framework} · trained, not used for this prediction`}
+          />
+        ))}
+      </div>
+      {(models.featureExtraction || models.dataset) && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          {models.dataset && (
+            <>
+              Trained on <span className="font-medium text-foreground">{models.dataset}</span>
+              {" · "}
+            </>
+          )}
+          {models.featureExtraction && (
+            <>
+              Features via{" "}
+              <span className="font-medium text-foreground">{models.featureExtraction}</span>
+            </>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ModelBadge({
+  label,
+  sublabel,
+  active = false,
+}: {
+  label: string;
+  sublabel: string;
+  active?: boolean;
+}) {
+  return (
+    <span
+      className={`inline-flex flex-col rounded-xl border px-3 py-1.5 text-left ${
+        active
+          ? "border-primary/40 bg-primary/10 text-foreground"
+          : "border-white/40 bg-white/50 text-foreground/80"
+      }`}
+      title={sublabel}
+    >
+      <span className="text-xs font-semibold">{label}</span>
+      <span className="text-[10px] text-muted-foreground">
+        {active ? `${sublabel} · active` : sublabel}
+      </span>
+    </span>
   );
 }
 

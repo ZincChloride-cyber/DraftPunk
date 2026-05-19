@@ -19,6 +19,8 @@ from config import (
     CNN_MODEL_PATH,
     SAMPLE_RATE,
     HOP_LENGTH,
+    get_prediction_model_info,
+    get_trained_models,
 )
 from feature_extraction import (
     extract_features_for_prediction,
@@ -156,6 +158,12 @@ class GenrePredictor:
             "features": audio_features,
             "mel_spectrogram": mel_spectrogram,
             "waveform": waveform,
+            "models": {
+                "prediction": get_prediction_model_info(),
+                "trained": get_trained_models(),
+                "feature_extraction": "librosa (MFCC, chroma, mel-spectrogram, spectral)",
+                "dataset": "GTZAN",
+            },
         }
 
     @staticmethod
