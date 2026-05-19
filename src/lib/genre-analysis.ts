@@ -7,6 +7,18 @@
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+export interface MelSpectrogramData {
+  values: number[][];
+  n_mels: number;
+  n_frames: number;
+  duration: number;
+  sample_rate: number;
+  hop_length: number;
+  fmax_hz: number;
+  db_min: number;
+  db_max: number;
+}
+
 export interface GenreResult {
   genre: string;
   confidence: number;
@@ -19,6 +31,8 @@ export interface GenreResult {
     energy: number;
     zeroCrossingRate: number;
   };
+  melSpectrogram?: MelSpectrogramData;
+  waveform?: number[];
 }
 
 // ── Configuration ────────────────────────────────────────────────────────────
@@ -74,6 +88,20 @@ async function analyzeWithBackend(file: File): Promise<GenreResult> {
       energy: data.features.energy,
       zeroCrossingRate: data.features.zero_crossing_rate,
     },
+    melSpectrogram: data.mel_spectrogram
+      ? {
+          values: data.mel_spectrogram.values,
+          n_mels: data.mel_spectrogram.n_mels,
+          n_frames: data.mel_spectrogram.n_frames,
+          duration: data.mel_spectrogram.duration,
+          sample_rate: data.mel_spectrogram.sample_rate,
+          hop_length: data.mel_spectrogram.hop_length,
+          fmax_hz: data.mel_spectrogram.fmax_hz,
+          db_min: data.mel_spectrogram.db_min,
+          db_max: data.mel_spectrogram.db_max,
+        }
+      : undefined,
+    waveform: data.waveform,
   };
 }
 
