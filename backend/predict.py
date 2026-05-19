@@ -20,7 +20,12 @@ from config import (
     SAMPLE_RATE,
     HOP_LENGTH,
 )
-from feature_extraction import extract_features_for_prediction, load_and_preprocess
+from feature_extraction import (
+    extract_features_for_prediction,
+    extract_mel_spectrogram_for_display,
+    extract_waveform_for_display,
+    load_and_preprocess,
+)
 
 
 class GenrePredictor:
@@ -103,6 +108,8 @@ class GenrePredictor:
         # ── Compute display-friendly audio features ──────────────────────
         signal = load_and_preprocess(file_path, max_duration=None)
         audio_features = self._compute_display_features(signal)
+        mel_spectrogram = extract_mel_spectrogram_for_display(signal)
+        waveform = extract_waveform_for_display(signal)
 
         # ── Predict per segment, then average probabilities ─────────────
         # Training uses each segment as its own sample; averaging raw features
@@ -147,6 +154,8 @@ class GenrePredictor:
             "confidence": round(confidence, 4),
             "scores": scores,
             "features": audio_features,
+            "mel_spectrogram": mel_spectrogram,
+            "waveform": waveform,
         }
 
     @staticmethod
