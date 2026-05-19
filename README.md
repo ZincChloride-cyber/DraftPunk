@@ -1,10 +1,10 @@
-# Draft Punk 🎵
+# Draft Punk 
 
 Draft Punk is a full-stack web application designed for music genre classification. It uses machine learning to analyze audio files and predict their musical genre with high accuracy. 
 
 The application is split into a modern React frontend and a powerful Python FastAPI backend that serves trained Machine Learning models (Random Forest, SVM, CNN) trained on the GTZAN dataset.
 
-## 🚀 Features
+##  Features
 
 - **Upload & Analyze**: Upload `.mp3` or `.wav` files directly from the UI.
 - **Machine Learning Powered**: Uses Random Forest (primary), SVM, or CNN models for prediction.
@@ -12,7 +12,7 @@ The application is split into a modern React frontend and a powerful Python Fast
 - **Modern UI**: Built with React, Vite, Tailwind CSS, and shadcn/ui components for a premium user experience.
 - **Fast API**: High-performance backend built with FastAPI.
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 **Frontend:**
 - React 19
@@ -33,7 +33,7 @@ The application is split into a modern React frontend and a powerful Python Fast
 - Pandas & NumPy
 - Uvicorn
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
 Draft Punk/
@@ -51,7 +51,7 @@ Draft Punk/
 └── vite.config.ts            # Vite configuration
 ```
 
-## ⚙️ Initialization & Setup
+##  Initialization & Setup
 
 To run Draft Punk locally, you need to set up both the backend and the frontend.
 
