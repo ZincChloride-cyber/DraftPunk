@@ -202,6 +202,68 @@ def extract_features_from_file(
     return [extract_features(seg) for seg in segments]
 
 
+def extract_waveform_for_display(
+    signal: np.ndarray,
+    *,
+    target_samples: int = 600,
+) -> list[float]:
+    """Downsample amplitude for a line waveform (same signal as mel spectrogram)."""
+    block = max(1, len(signal) // target_samples)
+    samples: list[float] = []
+    for i in range(target_samples):
+        start = i * block
+        chunk = signal[start : start + block]
+        if len(chunk) == 0:
+            samples.append(0.0)
+            continue
+        samples.append(float((np.min(chunk) + np.max(chunk)) / 2))
+    peak = max((abs(v) for v in samples), default=0.0)
+    if peak > 0:
+        samples = [v / peak for v in samples]
+    return [round(v, 4) for v in samples]
+
+
+def extract_mel_spectrogram_for_display(
+    signal: np.ndarray,
+    sr: int = SAMPLE_RATE,
+    *,
+    max_time_bins: int = 400,
+    max_mel_bins: int = 80,
+    fmax_hz: float = 8000,
+) -> dict:
+    """
+    Compute a mel power spectrogram (dB) for UI visualization.
+
+    Returns a downsampled 2-D matrix plus metadata so the frontend can
+    label axes without re-running librosa.
+    """
+    mel = librosa.feature.melspectrogram(
+        y=signal,
+        sr=sr,
+        n_fft=N_FFT,
+        hop_length=HOP_LENGTH,
+        n_mels=128,
+        fmax=fmax_hz,
+    )
+    mel_db = librosa.power_to_db(mel, ref=np.max)
+
+    mel_step = max(1, mel_db.shape[0] // max_mel_bins)
+    time_step = max(1, mel_db.shape[1] // max_time_bins)
+    mel_db = mel_db[::mel_step, ::time_step]
+
+    return {
+        "values": np.round(mel_db, 2).tolist(),
+        "n_mels": int(mel_db.shape[0]),
+        "n_frames": int(mel_db.shape[1]),
+        "duration": round(len(signal) / sr, 2),
+        "sample_rate": sr,
+        "hop_length": HOP_LENGTH,
+        "fmax_hz": fmax_hz,
+        "db_min": round(float(mel_db.min()), 2),
+        "db_max": round(float(mel_db.max()), 2),
+    }
+
+
 def extract_features_for_prediction(file_path: str) -> list[np.ndarray]:
     """
     Extract per-segment feature vectors for prediction.
