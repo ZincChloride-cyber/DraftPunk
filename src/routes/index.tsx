@@ -26,11 +26,26 @@ function Index() {
   const vantaRef = useRef<HTMLDivElement>(null);
   const [vantaEffect, setVantaEffect] = useState<any>(null);
 
-  // Check if the ML backend is online
+  // Check if the ML backend is online (retry every 5s until connected)
   useEffect(() => {
-    checkBackendHealth()
-      .then(() => setBackendOnline(true))
-      .catch(() => setBackendOnline(false));
+    let cancelled = false;
+
+    const check = () => {
+      checkBackendHealth()
+        .then(() => {
+          if (!cancelled) setBackendOnline(true);
+        })
+        .catch(() => {
+          if (!cancelled) setBackendOnline(false);
+        });
+    };
+
+    check();
+    const interval = setInterval(check, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
@@ -79,9 +94,19 @@ function Index() {
       setAudioBuffer(buffer);
       // Send file to ML backend (falls back to client-side heuristic)
       setTimeout(async () => {
-        const r = await analyzeAudio(f, buffer);
-        setResult(r);
-        setAnalyzing(false);
+        try {
+          const r = await analyzeAudio(f);
+          setResult(r);
+        } catch (e) {
+          const message =
+            e instanceof Error
+              ? e.message
+              : "Analysis failed. Start the backend: cd backend && python -m uvicorn main:app --reload --port 8000";
+          setError(message);
+          setResult(null);
+        } finally {
+          setAnalyzing(false);
+        }
       }, 50);
     } catch (e) {
       console.error(e);
@@ -154,7 +179,7 @@ function Index() {
                     : "bg-amber-100 text-amber-700"
                 }`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${backendOnline ? "bg-emerald-500" : "bg-amber-500"}`} />
-                  {backendOnline ? "ML Model" : "Fallback"}
+                  {backendOnline ? "ML Model" : "Offline"}
                 </span>
               )}
             </div>
@@ -248,6 +273,8 @@ function Index() {
                     <div className="h-12 w-48 animate-pulse rounded-lg bg-secondary" />
                     <div className="mt-3 h-4 w-32 animate-pulse rounded bg-secondary" />
                   </div>
+                ) : error ? (
+                  <p className="mt-4 text-sm text-destructive">{error}</p>
                 ) : result ? (
                   <>
                     <h3 className="mt-2 text-6xl font-bold tracking-tight text-foreground">{result.genre}</h3>

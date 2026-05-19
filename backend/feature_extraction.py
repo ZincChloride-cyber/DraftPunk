@@ -14,10 +14,13 @@ Features extracted (per segment):
                                               Total = 113 values
 """
 
+from __future__ import annotations
+
 import numpy as np
 import librosa
 
 from config import (
+    AUDIO_DURATION,
     SAMPLE_RATE,
     N_MFCC,
     N_CHROMA,
@@ -28,7 +31,11 @@ from config import (
 )
 
 
-def load_and_preprocess(file_path: str) -> np.ndarray:
+def load_and_preprocess(
+    file_path: str,
+    *,
+    max_duration: int | None = None,
+) -> np.ndarray:
     """
     Load an audio file, resample, normalise, and trim silence.
 
@@ -52,6 +59,13 @@ def load_and_preprocess(file_path: str) -> np.ndarray:
 
     # Trim silence from start and end
     signal, _ = librosa.effects.trim(signal, top_db=abs(SILENCE_THRESHOLD))
+
+    # For uploads longer than GTZAN clips, use the middle section (matches training data)
+    if max_duration is not None:
+        max_samples = max_duration * SAMPLE_RATE
+        if len(signal) > max_samples:
+            start = (len(signal) - max_samples) // 2
+            signal = signal[start : start + max_samples]
 
     return signal
 
@@ -151,7 +165,11 @@ def extract_features(signal: np.ndarray, sr: int = SAMPLE_RATE) -> np.ndarray:
     return np.array(features, dtype=np.float64)
 
 
-def extract_features_from_file(file_path: str) -> list[np.ndarray]:
+def extract_features_from_file(
+    file_path: str,
+    *,
+    for_prediction: bool = False,
+) -> list[np.ndarray]:
     """
     Full pipeline: load → preprocess → segment → extract features.
 
@@ -159,36 +177,42 @@ def extract_features_from_file(file_path: str) -> list[np.ndarray]:
     ----------
     file_path : str
         Path to the audio file.
+    for_prediction : bool
+        When True, crop long tracks to the center AUDIO_DURATION window (GTZAN-style)
+        and pad short clips to SEGMENT_DURATION so features match training.
 
     Returns
     -------
     list[np.ndarray]
         One feature vector per segment.
     """
-    signal = load_and_preprocess(file_path)
+    signal = load_and_preprocess(
+        file_path,
+        max_duration=AUDIO_DURATION if for_prediction else None,
+    )
     segments = split_into_segments(signal)
 
-    # If the audio is shorter than SEGMENT_DURATION, use the whole thing
+    # Pad short clips to the same length used during training
     if not segments:
+        segment_samples = SAMPLE_RATE * SEGMENT_DURATION
+        if len(signal) < segment_samples:
+            signal = librosa.util.fix_length(signal, size=segment_samples)
         segments = [signal]
 
     return [extract_features(seg) for seg in segments]
 
 
-def extract_features_for_prediction(file_path: str) -> np.ndarray:
+def extract_features_for_prediction(file_path: str) -> list[np.ndarray]:
     """
-    Extract features for a single prediction (averages across segments).
+    Extract per-segment feature vectors for prediction.
 
-    Parameters
-    ----------
-    file_path : str
-        Path to the uploaded audio file.
+    The model was trained on individual 10-second segments, not averaged
+    features across a whole song — callers should predict per segment and
+    aggregate probabilities.
 
     Returns
     -------
-    np.ndarray
-        Averaged feature vector (1-D, 113 values).
+    list[np.ndarray]
+        One 113-dimensional feature vector per segment.
     """
-    segment_features = extract_features_from_file(file_path)
-    # Average across all segments for a single prediction vector
-    return np.mean(segment_features, axis=0)
+    return extract_features_from_file(file_path, for_prediction=True)

@@ -95,31 +95,37 @@ class GenrePredictor:
         """
         self.load()
 
-        # ── Extract features ──────────────────────────────────────────────
-        feature_vector = extract_features_for_prediction(file_path)
+        # ── Extract features (one vector per 10s segment, GTZAN-style) ───
+        segment_features = extract_features_for_prediction(file_path)
+        if not segment_features:
+            raise ValueError("Could not extract features from audio file.")
 
         # ── Compute display-friendly audio features ──────────────────────
-        signal = load_and_preprocess(file_path)
+        signal = load_and_preprocess(file_path, max_duration=None)
         audio_features = self._compute_display_features(signal)
 
-        # ── Scale features ────────────────────────────────────────────────
-        if self.scaler is not None:
-            feature_vector_scaled = self.scaler.transform(
-                feature_vector.reshape(1, -1)
-            )
-        else:
-            feature_vector_scaled = feature_vector.reshape(1, -1)
+        # ── Predict per segment, then average probabilities ─────────────
+        # Training uses each segment as its own sample; averaging raw features
+        # before predict does not match what the model learned.
+        prob_list: list[np.ndarray] = []
+        for feature_vector in segment_features:
+            if self.scaler is not None:
+                X = self.scaler.transform(feature_vector.reshape(1, -1))
+            else:
+                X = feature_vector.reshape(1, -1)
 
-        # ── Predict ───────────────────────────────────────────────────────
+            if self.model_type == "cnn":
+                X_cnn = X[..., np.newaxis]
+                prob_list.append(self.model.predict(X_cnn, verbose=0)[0])
+            else:
+                prob_list.append(self.model.predict_proba(X)[0])
+
+        probabilities = np.mean(prob_list, axis=0)
+        predicted_idx = int(np.argmax(probabilities))
+
         if self.model_type == "cnn":
-            # CNN expects (samples, features, 1)
-            X_cnn = feature_vector_scaled[..., np.newaxis]
-            probabilities = self.model.predict(X_cnn, verbose=0)[0]
-            predicted_idx = int(np.argmax(probabilities))
             genre = self.label_encoder.inverse_transform([predicted_idx])[0]
         else:
-            probabilities = self.model.predict_proba(feature_vector_scaled)[0]
-            predicted_idx = int(np.argmax(probabilities))
             genre = self.model.classes_[predicted_idx]
 
         confidence = float(probabilities[predicted_idx])
