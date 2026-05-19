@@ -5,6 +5,7 @@ import * as THREE from "three";
 import CLOUDS from "vanta/dist/vanta.clouds.min";
 import { Upload, Music, Play, Pause, RotateCcw, AudioWaveform } from "lucide-react";
 import { Waveform } from "@/components/Waveform";
+import { AudioVisualization } from "@/components/AudioVisualization";
 import { analyzeAudio, checkBackendHealth, type GenreResult } from "@/lib/genre-analysis";
 
 export const Route = createFileRoute("/")({
@@ -322,6 +323,15 @@ function Index() {
                 </ul>
               </div>
             </div>
+
+            {result && !analyzing && (
+              <AudioVisualization
+                audioBuffer={audioBuffer}
+                result={result}
+                progress={progress}
+                onSeek={seek}
+              />
+            )}
           </section>
         )}
       </main>
