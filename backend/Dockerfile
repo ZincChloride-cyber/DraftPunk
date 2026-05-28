@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # Install system audio libraries required by Librosa and soundfile
 RUN apt-get update && apt-get install -y \
