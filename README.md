@@ -1,3 +1,12 @@
+---
+title: Draftpunk Api
+emoji: 🦀
+colorFrom: purple
+colorTo: red
+sdk: docker
+pinned: false
+---
+
 # Draft Punk
 
 Draft Punk is a full-stack web application designed for music genre classification. It uses machine learning to analyze audio files and predict their musical genre with high accuracy. 
