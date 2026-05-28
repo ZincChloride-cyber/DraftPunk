@@ -4,7 +4,7 @@ soundfile>=0.13.0
 
 # ── ML Frameworks ──
 scikit-learn>=1.7.0
-tensorflow>=2.19.0
+# tensorflow>=2.19.0 (Commented out to save space and memory on Render; CNN is not currently on disk)
 joblib>=1.4.0
 
 # ── Backend Framework ──

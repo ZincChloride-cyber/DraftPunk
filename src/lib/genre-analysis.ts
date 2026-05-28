@@ -53,7 +53,7 @@ export interface GenreResult {
 // ── Configuration ────────────────────────────────────────────────────────────
 
 // In dev, Vite proxies /api → http://127.0.0.1:8000 (see vite.config.ts)
-const API_BASE_URL = import.meta.env.DEV ? "" : "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "" : "http://localhost:8000");
 
 // ── Main analysis function ───────────────────────────────────────────────────
 
